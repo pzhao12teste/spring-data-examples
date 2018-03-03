@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package example.springdata.redis.repositories;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertThat;
 
 import example.springdata.redis.test.util.EmbeddedRedisServer;
 import example.springdata.redis.test.util.RequiresRedisServer;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -65,7 +67,7 @@ public class PersonRepositoryTests<K, V> {
 			.around(RequiresRedisServer.onLocalhost().atLeast("3.2"));
 
 	/** {@link Charset} for String conversion **/
-	private static final Charset CHARSET = StandardCharsets.UTF_8;
+	private static final Charset CHARSET = Charset.forName("UTF-8");
 
 	@Autowired RedisOperations<K, V> operations;
 	@Autowired PersonRepository repository;
@@ -100,9 +102,9 @@ public class PersonRepositoryTests<K, V> {
 
 		repository.save(eddard);
 
-		assertThat(operations
-				.execute((RedisConnection connection) -> connection.exists(("persons:" + eddard.getId()).getBytes(CHARSET))))
-						.isTrue();
+		assertThat(operations.execute(
+				(RedisConnection connection) -> connection.exists(new String("persons:" + eddard.getId()).getBytes(CHARSET))),
+				is(true));
 	}
 
 	/**
@@ -115,7 +117,8 @@ public class PersonRepositoryTests<K, V> {
 
 		List<Person> starks = repository.findByLastname(eddard.getLastname());
 
-		assertThat(starks).contains(eddard, robb, sansa, arya, bran, rickon).doesNotContain(jon);
+		assertThat(starks, containsInAnyOrder(eddard, robb, sansa, arya, bran, rickon));
+		assertThat(starks, not(hasItem(jon)));
 	}
 
 	/**
@@ -128,7 +131,8 @@ public class PersonRepositoryTests<K, V> {
 
 		List<Person> aryaStark = repository.findByFirstnameAndLastname(arya.getFirstname(), arya.getLastname());
 
-		assertThat(aryaStark).containsOnly(arya);
+		assertThat(aryaStark, hasItem(arya));
+		assertThat(aryaStark, not(hasItems(eddard, robb, sansa, bran, rickon, jon)));
 	}
 
 	/**
@@ -141,26 +145,27 @@ public class PersonRepositoryTests<K, V> {
 
 		List<Person> aryaAndJon = repository.findByFirstnameOrLastname(arya.getFirstname(), jon.getLastname());
 
-		assertThat(aryaAndJon).containsOnly(arya, jon);
+		assertThat(aryaAndJon, containsInAnyOrder(arya, jon));
+		assertThat(aryaAndJon, not(hasItems(eddard, robb, sansa, bran, rickon)));
 	}
 
 	/**
 	 * Find entities in range defined by {@link Pageable}.
 	 */
 	@Test
-	public void findByReturningPage() {
+	public void findByReturingPage() {
 
 		flushTestUsers();
 
-		Page<Person> page1 = repository.findPersonByLastname(eddard.getLastname(), PageRequest.of(0, 5));
+		Page<Person> page1 = repository.findPersonByLastname(eddard.getLastname(), new PageRequest(0, 5));
 
-		assertThat(page1.getNumberOfElements()).isEqualTo(5);
-		assertThat(page1.getTotalElements()).isEqualTo(6);
+		assertThat(page1.getNumberOfElements(), is(5));
+		assertThat(page1.getTotalElements(), is(6L));
 
-		Page<Person> page2 = repository.findPersonByLastname(eddard.getLastname(), PageRequest.of(1, 5));
+		Page<Person> page2 = repository.findPersonByLastname(eddard.getLastname(), new PageRequest(1, 5));
 
-		assertThat(page2.getNumberOfElements()).isEqualTo(1);
-		assertThat(page2.getTotalElements()).isEqualTo(6);
+		assertThat(page2.getNumberOfElements(), is(1));
+		assertThat(page2.getTotalElements(), is(6L));
 	}
 
 	/**
@@ -179,7 +184,8 @@ public class PersonRepositoryTests<K, V> {
 
 		List<Person> eddardStark = repository.findByAddress_City(winterfell.getCity());
 
-		assertThat(eddardStark).containsOnly(eddard);
+		assertThat(eddardStark, hasItem(eddard));
+		assertThat(eddardStark, not(hasItems(robb, sansa, arya, bran, rickon, jon)));
 	}
 
 	/**
@@ -207,16 +213,18 @@ public class PersonRepositoryTests<K, V> {
 		Circle innerCircle = new Circle(new Point(51.8911912, -0.4979756), new Distance(50, Metrics.KILOMETERS));
 		List<Person> eddardStark = repository.findByAddress_LocationWithin(innerCircle);
 
-		assertThat(eddardStark).containsOnly(robb);
+		assertThat(eddardStark, hasItem(robb));
+		assertThat(eddardStark, hasSize(1));
 
 		Circle biggerCircle = new Circle(new Point(51.8911912, -0.4979756), new Distance(200, Metrics.KILOMETERS));
 		List<Person> eddardAndRobbStark = repository.findByAddress_LocationWithin(biggerCircle);
 
-		assertThat(eddardAndRobbStark).hasSize(2).contains(robb, eddard);
+		assertThat(eddardAndRobbStark, hasItems(robb, eddard));
+		assertThat(eddardAndRobbStark, hasSize(2));
 	}
 
 	/**
-	 * Store references to other entities without embedding all data. <br />
+	 * Store references to other entites without embedding all data. <br />
 	 * Print out the hash structure within Redis.
 	 */
 	@Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,6 @@
  */
 package example.springdata.redis.test.util;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
-
-import java.time.Duration;
-
 import org.junit.internal.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -28,9 +22,10 @@ import org.junit.runners.model.Statement;
 import org.springframework.data.redis.connection.RedisNode;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
 
+import redis.clients.jedis.Jedis;
+
 /**
  * @author Christoph Strobl
- * @author Mark Paluch
  */
 public class RequiresRedisSentinel implements TestRule {
 
@@ -49,8 +44,8 @@ public class RequiresRedisSentinel implements TestRule {
 	}
 
 	/**
-	 * Create new {@link RequiresRedisSentinel} for given {@link RedisSentinelConfiguration}.
-	 *
+	 * Create new {@link RedisSentinelRule} for given {@link RedisSentinelConfiguration}.
+	 * 
 	 * @param config
 	 * @return
 	 */
@@ -59,8 +54,8 @@ public class RequiresRedisSentinel implements TestRule {
 	}
 
 	/**
-	 * Create new {@link RequiresRedisSentinel} using default configuration.
-	 *
+	 * Create new {@link RedisSentinelRule} using default configuration.
+	 * 
 	 * @return
 	 */
 	public static RequiresRedisSentinel withDefaultConfig() {
@@ -75,7 +70,7 @@ public class RequiresRedisSentinel implements TestRule {
 
 	/**
 	 * Verifies all {@literal Sentinel} nodes are available.
-	 *
+	 * 
 	 * @return
 	 */
 	public RequiresRedisSentinel allActive() {
@@ -86,7 +81,7 @@ public class RequiresRedisSentinel implements TestRule {
 
 	/**
 	 * Verifies at least one {@literal Sentinel} node is available.
-	 *
+	 * 
 	 * @return
 	 */
 	public RequiresRedisSentinel oneActive() {
@@ -98,7 +93,7 @@ public class RequiresRedisSentinel implements TestRule {
 	/**
 	 * Will only check {@link RedisSentinelConfiguration} configuration in case {@link RequiresRedisSentinel} is detected
 	 * on test method.
-	 *
+	 * 
 	 * @return
 	 */
 	public RequiresRedisSentinel dynamicModeSelection() {
@@ -143,9 +138,9 @@ public class RequiresRedisSentinel implements TestRule {
 
 		if (failed > 0) {
 			if (SentinelsAvailable.ALL_ACTIVE.equals(verificationMode)) {
-				throw new AssumptionViolatedException(
-						String.format("Expected all Redis Sentinels to respone but %s of %s did not responde", failed,
-								sentinelConfig.getSentinels().size()));
+				throw new AssumptionViolatedException(String.format(
+						"Expected all Redis Sentinels to respone but %s of %s did not responde", failed, sentinelConfig
+								.getSentinels().size()));
 			}
 
 			if (SentinelsAvailable.ONE_ACTIVE.equals(verificationMode) && sentinelConfig.getSentinels().size() - 1 < failed) {
@@ -155,23 +150,32 @@ public class RequiresRedisSentinel implements TestRule {
 		}
 
 		if (SentinelsAvailable.NONE_ACTIVE.equals(verificationMode) && failed != sentinelConfig.getSentinels().size()) {
-			throw new AssumptionViolatedException(
-					String.format("Expected to have no sentinels online but found that %s are still alive.",
-							(sentinelConfig.getSentinels().size() - failed)));
+			throw new AssumptionViolatedException(String.format(
+					"Expected to have no sentinels online but found that %s are still alive.", (sentinelConfig.getSentinels()
+							.size() - failed)));
 		}
 	}
 
 	private boolean isAvailable(RedisNode node) {
 
-		RedisClient redisClient = RedisClient.create(ManagedClientResources.getClientResources(),
-				RedisURI.create(node.getHost(), node.getPort()));
+		Jedis jedis = null;
 
-		try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-			connection.sync().ping();
+		try {
+			jedis = new Jedis(node.getHost(), node.getPort());
+			jedis.connect();
+			jedis.ping();
 		} catch (Exception e) {
 			return false;
 		} finally {
-			redisClient.shutdown(Duration.ZERO, Duration.ZERO);
+
+			if (jedis != null) {
+				try {
+					jedis.disconnect();
+					jedis.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 		}
 
 		return true;

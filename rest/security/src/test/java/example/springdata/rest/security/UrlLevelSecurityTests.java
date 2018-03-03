@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
-import java.util.Base64;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +30,7 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.codec.Base64;
 import org.springframework.security.web.FilterChainProxy;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -87,8 +86,7 @@ public class UrlLevelSecurityTests {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.add(HttpHeaders.ACCEPT, MediaTypes.HAL_JSON_VALUE);
-		headers.add(HttpHeaders.AUTHORIZATION,
-				"Basic " + new String(Base64.getEncoder().encodeToString(("greg:turnquist").getBytes())));
+		headers.add(HttpHeaders.AUTHORIZATION, "Basic " + new String(Base64.encode(("greg:turnquist").getBytes())));
 
 		mvc.perform(get("/employees").//
 				headers(headers)).//
@@ -105,8 +103,7 @@ public class UrlLevelSecurityTests {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.ACCEPT, MediaTypes.HAL_JSON_VALUE);
-		headers.set(HttpHeaders.AUTHORIZATION,
-				"Basic " + new String(Base64.getEncoder().encodeToString(("ollie:gierke").getBytes())));
+		headers.set(HttpHeaders.AUTHORIZATION, "Basic " + new String(Base64.encode(("ollie:gierke").getBytes())));
 
 		mvc.perform(get("/employees").//
 				headers(headers)).//
@@ -115,9 +112,11 @@ public class UrlLevelSecurityTests {
 
 		headers.set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
-		String location = mvc.perform(post("/employees").//
-				content(PAYLOAD).//
-				headers(headers)).//
+		String location = mvc
+				.perform(post("/employees").//
+						content(PAYLOAD).//
+						headers(headers))
+				.//
 				andExpect(status().isCreated()).//
 				andReturn().getResponse().getHeader(HttpHeaders.LOCATION);
 

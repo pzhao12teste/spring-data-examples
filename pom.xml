@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.springframework.data.examples</groupId>
@@ -12,15 +11,13 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.0.RELEASE</version>
+		<version>2.0.0.BUILD-SNAPSHOT</version>
 	</parent>
 
 	<modules>
 		<module>bom</module>
 		<module>cassandra</module>
-		<module>couchbase</module>
 		<module>elasticsearch</module>
-		<module>jdbc</module>
 		<module>jpa</module>
 		<module>ldap</module>
 		<module>map</module>
@@ -34,26 +31,23 @@
 	</modules>
 
 	<properties>
+
 		<apt.version>1.1.3</apt.version>
-	</properties>
+		<java.version>1.8</java.version>
+		<spring-data-releasetrain.version>Kay-RELEASE</spring-data-releasetrain.version>
+
+	<gib.commitRange>${env.TRAVIS_COMMIT_RANGE}</gib.commitRange>
+        <gib.enabled>true</gib.enabled>
+        <gib.useEkstazi>true</gib.useEkstazi>
+        <gib.excludePathRegex>(.*\.apt$)|(.*\.txt$)|(.*\.md$)|(.*\.html$)|(.*\.rst$)|(.*\.scss$)|(.*\.css$)|(.*\.png$)|(.*\.py$)|(.*README$)|(.*README\.*)|(.*\.jpg$)|(.*\.jpeg$)|(.*NOTICE$)|(.*\.git.*$)|(site.xml)|(index.xml)|(checkstyle.xml)</gib.excludePathRegex>
+        <gib.classpathFile>/tmp/classpathFile</gib.classpathFile>
+    </properties>
 
 	<profiles>
 		<profile>
-			<id>spring-data-next</id>
+			<id>spring5</id>
 			<properties>
-				<spring-data-releasetrain.version>Kay-BUILD-SNAPSHOT</spring-data-releasetrain.version>
-			</properties>
-		</profile>
-		<profile>
-			<id>spring-data-next-releasetrain</id>
-			<properties>
-				<spring-data-releasetrain.version>Lovelace-BUILD-SNAPSHOT</spring-data-releasetrain.version>
-			</properties>
-		</profile>
-		<profile>
-			<id>spring-data-next-releasetrain-released</id>
-			<properties>
-				<spring-data-releasetrain.version>Lovelace-M1</spring-data-releasetrain.version>
+				<spring.version>5.0.0.M3</spring.version>
 			</properties>
 		</profile>
 	</profiles>
@@ -84,11 +78,6 @@
 			<name>Mark Paluch</name>
 			<email>mpaluch@pivotal.io</email>
 		</developer>
-		<developer>
-			<id>jschauder</id>
-			<name>Jens Schauder</name>
-			<email>jschauder@pivotal.io</email>
-		</developer>
 	</developers>
 
 	<dependencies>
@@ -107,6 +96,7 @@
 
 		<!-- Test dependencies -->
 
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -114,6 +104,27 @@
 		</dependency>
 
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<compilerArgument>-parameters</compilerArgument>
+				</configuration>
+			</plugin>
+		</plugins>
+	<extensions>
+            <extension>
+                <groupId>edu.illinois</groupId>
+                <artifactId>incremental-builder-with-ekstazi</artifactId>
+                <version>3.5.5</version>
+            </extension>
+        </extensions>
+    </build>
 
 	<repositories>
 		<repository>
@@ -130,3 +141,4 @@
 	</pluginRepositories>
 
 </project>
+

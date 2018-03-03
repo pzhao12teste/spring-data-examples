@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 the original author or authors.
+ * Copyright 2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package example.springdata.rest.headers;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.springframework.http.HttpHeaders.*;
+import static org.springframework.restdocs.RestDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,6 +28,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.restdocs.config.RestDocumentationConfigurer;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -48,39 +51,22 @@ public class CrossOriginIntegrationTests {
 
 	@Before
 	public void setUp() {
-		this.mvc = MockMvcBuilders.webAppContextSetup(context).build();
-	}
 
-	@Test
-	public void executePreflightRequest() throws Exception {
-
-		String origin = "http://localhost:1234";
-		URI uri = URI.create("/customers");
-
-		mvc.perform(options(uri).header(ORIGIN, origin).header(ACCESS_CONTROL_REQUEST_METHOD, "POST")) //
-				.andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, is(origin))) //
-				.andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, containsString("GET"))) //
-				.andExpect(header().string(ACCESS_CONTROL_ALLOW_METHODS, containsString("POST"))); //
+		this.mvc = MockMvcBuilders.webAppContextSetup(context).//
+				apply(new RestDocumentationConfigurer()).//
+				build();
 	}
 
 	@Test
 	public void executeCrossOriginRequest() throws Exception {
 
-		String origin = "http://localhost:1234";
+		String origin = "http://localhost";
 		URI uri = URI.create("/customers");
 
-		mvc.perform(get(uri).header(ORIGIN, origin)) //
-				.andExpect(status().isOk()) //
-				.andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, is(origin)));
-	}
-
-	@Test
-	public void rejectCrossOriginRequest() throws Exception {
-
-		String origin = "http://foo.bar";
-		URI uri = URI.create("/customers");
-
-		mvc.perform(get(uri).header(ORIGIN, origin)) //
-				.andExpect(status().isForbidden());
+		MockHttpServletResponse response = mvc.perform(get(uri).header(ORIGIN, origin)).//
+				andExpect(header().string(ACCESS_CONTROL_ALLOW_CREDENTIALS, is("true"))).//
+				andExpect(header().string(ACCESS_CONTROL_ALLOW_ORIGIN, is(origin))).//
+				andDo(document("cors")).//
+				andReturn().getResponse();
 	}
 }

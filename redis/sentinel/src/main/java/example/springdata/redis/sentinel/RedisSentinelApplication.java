@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StopWatch;
@@ -32,7 +31,6 @@ import org.springframework.util.StopWatch;
 /**
  * @author Christoph Strobl
  * @author Oliver Gierke
- * @author Mark Paluch
  */
 @Configuration
 public class RedisSentinelApplication {
@@ -76,7 +74,7 @@ public class RedisSentinelApplication {
 	}
 
 	public @Bean RedisConnectionFactory connectionFactory() {
-		return new LettuceConnectionFactory(sentinelConfig(), LettuceClientConfiguration.defaultConfiguration());
+		return new LettuceConnectionFactory(sentinelConfig());
 	}
 
 	public @Bean RedisSentinelConfiguration sentinelConfig() {

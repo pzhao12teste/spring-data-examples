@@ -1,33 +1,45 @@
-language: java
-
-jdk:
-  - oraclejdk8
-
 addons:
   apt:
-    sources:
-      - sourceline: 'deb http://packages.couchbase.com/releases/couchbase-server/community/deb/  trusty trusty/main'
-      - sourceline: 'deb http://packages.couchbase.com/ubuntu trusty trusty/main'
-        key_url: 'http://packages.couchbase.com/ubuntu/couchbase.key'
     packages:
-      - oracle-java8-installer
-      - couchbase-server-community
-
-services:
-  - redis-server
-
+    - oracle-java8-installer
+before_cache:
+- rm -rf $HOME/CACHE; find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do
+  du -sh $line;         DIR=$(dirname $HOME/CACHE$line); mkdir -p $DIR; cp -r $line
+  $DIR; done
+- echo CACHESIZE $(du -sk $HOME/CACHE)
+- cp /tmp/classpathFile $HOME/CACHE/classpathFile
+before_install:
+- if [ "$TRAVIS_OS_NAME" == "osx" ];        then sed -i '' 's/<gib.enabled>true/<gib.enabled>false/'
+  $TRAVIS_BUILD_DIR/pom.xml;        else sed -i 's/<gib.enabled>true/<gib.enabled>false/'
+  $TRAVIS_BUILD_DIR/pom.xml;        fi
+- find $HOME/CACHE -name .ekstazi | while read line; do du -sh $line;         DIR=$(dirname
+  ${line#$HOME/CACHE}); if [[ -d ${DIR#.ekstazi/} ]]; then cp -r $line $DIR; fi; done
+before_script:
+- find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do rm -rf $line; done
+- find $HOME/CACHE -name .ekstazi | while read line; do du -sh $line;         DIR=$(dirname
+  ${line#$HOME/CACHE}); if [[ -d ${DIR#.ekstazi/} ]]; then cp -r $line $DIR; fi; done
+- if [ "$TRAVIS_OS_NAME" == "osx" ];    then sed -i '' 's/<gib.enabled>false/<gib.enabled>true/'
+  $TRAVIS_BUILD_DIR/pom.xml;    else sed -i 's/<gib.enabled>false/<gib.enabled>true/'
+  $TRAVIS_BUILD_DIR/pom.xml;    fi
+- if [[ -e $HOME/CACHE/classpathFile ]]; then cp $HOME/CACHE/classpathFile /tmp/;
+  fi
 cache:
   directories:
-    - $HOME/.m2
-    - download
-
-# See https://issues.couchbase.com/browse/MB-26556
-install:
-  - curl -X POST http://127.0.0.1:8091/pools/default -d memoryQuota=2000  -d indexMemoryQuota=256 -d ftsMemoryQuota=256
-  - curl -X POST http://127.0.0.1:8091/node/controller/setupServices -d "services=kv,index,n1ql,fts"
-  - curl -X POST http://127.0.0.1:8091/settings/indexes -d "storageMode=forestdb"
-  - curl -X POST http://127.0.0.1:8091/settings/web -d "username=Administrator&password=password&port=8091&"
-  - /opt/couchbase/bin/cbdocloader -c 127.0.0.1:8091 -u Administrator -p password -b travel-sample -m 256 -d /opt/couchbase/samples/travel-sample.zip
-  - /opt/couchbase/bin/couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator -p password --set  --rbac-username=travel-sample --rbac-password=password --roles=admin --auth-domain local
-
-script: "mvn clean dependency:list test -U -Dsort -Dmaven.test.redirectTestOutputToFile=true -B"
+  - $HOME/.m2
+  - $HOME/CACHE
+  - $HOME/CACHE
+install: true
+jdk:
+- oraclejdk8
+language: java
+script:
+- touch /tmp/NOW
+- echo GIBSTUDYSTART $(date)
+- mvn clean dependency:list test -U -Dsort -Dmaven.test.redirectTestOutputToFile=true
+  -B
+- echo GIBSTUDYEND $(date)
+- cd $TRAVIS_BUILD_DIR
+- echo TESTNUM $(find . -name TEST-*.xml -newer /tmp/NOW | wc -l)
+services:
+- redis-server
+sudo: false

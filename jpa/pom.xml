@@ -29,20 +29,22 @@
 		<module>vavr</module>
 	</modules>
 
-	<profiles>
-		<profile>
-			<id>hibernate-53</id>
-			<properties>
-				<hibernate.version>5.3.0.CR1</hibernate.version>
-			</properties>
-		</profile>
-	</profiles>
-
 	<dependencies>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.hibernate</groupId>
+					<artifactId>hibernate-entitymanager</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
 		</dependency>
 
 		<dependency>

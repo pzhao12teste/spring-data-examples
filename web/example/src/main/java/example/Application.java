@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 the original author or authors.
+ * Copyright 2015-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
@@ -44,11 +45,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  * <li>The ability to use proxy-backed interfaces to bind request payloads (see
  * {@link example.users.web.UserController.UserForm})</li>
  * </ol>
- *
+ * 
  * @author Oliver Gierke
- * @author Mark Paluch
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 public class Application {
 
 	public static void main(String... args) {
@@ -71,7 +71,7 @@ public class Application {
 	/**
 	 * A Spring Security {@link PasswordEncoder} to encrypt passwords for newly created users, used in
 	 * {@link UserManagement}.
-	 *
+	 * 
 	 * @return
 	 */
 	public @Bean PasswordEncoder passwordEncoder() {

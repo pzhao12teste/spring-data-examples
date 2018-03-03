@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 the original author or authors.
+ * Copyright 2014-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package example.springdata.redis.test.util;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
+import redis.clients.jedis.Jedis;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.time.Duration;
 
 import org.junit.AssumptionViolatedException;
 import org.junit.rules.ExternalResource;
-import org.springframework.data.redis.connection.lettuce.LettuceConverters;
+import org.springframework.data.redis.connection.jedis.JedisConverters;
 import org.springframework.data.util.Version;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -110,22 +107,16 @@ public class RequiresRedisServer extends ExternalResource {
 			return;
 		}
 
-		RedisClient redisClient = RedisClient.create(ManagedClientResources.getClientResources(),
-				RedisURI.create(host, port));
+		try (Jedis jedis = new Jedis(host, port)) {
 
-		try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-
-			String infoServer = connection.sync().info("server");
-			String redisVersion = LettuceConverters.stringToProps().convert(infoServer).getProperty("redis_version");
+			String infoServer = jedis.info("server");
+			String redisVersion = JedisConverters.stringToProps().convert(infoServer).getProperty("redis_version");
 			Version runningVersion = Version.parse(redisVersion);
 
 			if (runningVersion.isLessThan(requiredVersion)) {
 				throw new AssumptionViolatedException(String
 						.format("This test requires Redis version %s but you run version %s", requiredVersion, runningVersion));
 			}
-
-		} finally {
-			redisClient.shutdown(Duration.ZERO, Duration.ZERO);
 		}
 	}
 }
