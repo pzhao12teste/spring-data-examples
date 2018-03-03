@@ -33,15 +33,34 @@
 	</modules>
 
 	<properties>
-
 		<apt.version>1.1.3</apt.version>
-
 	<gib.commitRange>${env.TRAVIS_COMMIT_RANGE}</gib.commitRange>
         <gib.enabled>true</gib.enabled>
         <gib.useEkstazi>true</gib.useEkstazi>
         <gib.excludePathRegex>(.*\.apt$)|(.*\.txt$)|(.*\.md$)|(.*\.html$)|(.*\.rst$)|(.*\.scss$)|(.*\.css$)|(.*\.png$)|(.*\.py$)|(.*README$)|(.*README\.*)|(.*\.jpg$)|(.*\.jpeg$)|(.*NOTICE$)|(.*\.git.*$)|(site.xml)|(index.xml)|(checkstyle.xml)</gib.excludePathRegex>
         <gib.classpathFile>/tmp/classpathFile</gib.classpathFile>
     </properties>
+
+	<profiles>
+		<profile>
+			<id>spring-data-next</id>
+			<properties>
+				<spring-data-releasetrain.version>Kay-BUILD-SNAPSHOT</spring-data-releasetrain.version>
+			</properties>
+		</profile>
+		<profile>
+			<id>spring-data-next-releasetrain</id>
+			<properties>
+				<spring-data-releasetrain.version>Lovelace-BUILD-SNAPSHOT</spring-data-releasetrain.version>
+			</properties>
+		</profile>
+		<profile>
+			<id>spring-data-next-releasetrain-released</id>
+			<properties>
+				<spring-data-releasetrain.version>Lovelace-M1</spring-data-releasetrain.version>
+			</properties>
+		</profile>
+	</profiles>
 
 	<developers>
 		<developer>
