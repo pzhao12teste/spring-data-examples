@@ -2,6 +2,12 @@ addons:
   apt:
     packages:
     - oracle-java8-installer
+    - couchbase-server-community
+    sources:
+    - sourceline: deb http://packages.couchbase.com/releases/couchbase-server/community/deb/  trusty
+        trusty/main
+    - key_url: http://packages.couchbase.com/ubuntu/couchbase.key
+      sourceline: deb http://packages.couchbase.com/ubuntu trusty trusty/main
 before_cache:
 - rm -rf $HOME/CACHE; find $TRAVIS_BUILD_DIR -name .ekstazi | while read line; do
   du -sh $line;         DIR=$(dirname $HOME/CACHE$line); mkdir -p $DIR; cp -r $line
@@ -26,9 +32,20 @@ before_script:
 cache:
   directories:
   - $HOME/.m2
+  - download
   - $HOME/CACHE
   - $HOME/CACHE
-install: true
+install:
+- curl -X POST http://127.0.0.1:8091/pools/default -d memoryQuota=2000  -d indexMemoryQuota=256
+  -d ftsMemoryQuota=256
+- curl -X POST http://127.0.0.1:8091/node/controller/setupServices -d "services=kv,index,n1ql,fts"
+- curl -X POST http://127.0.0.1:8091/settings/indexes -d "storageMode=forestdb"
+- curl -X POST http://127.0.0.1:8091/settings/web -d "username=Administrator&password=password&port=8091&"
+- /opt/couchbase/bin/cbdocloader -c 127.0.0.1:8091 -u Administrator -p password -b
+  travel-sample -m 256 -d /opt/couchbase/samples/travel-sample.zip
+- /opt/couchbase/bin/couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator
+  -p password --set  --rbac-username=travel-sample --rbac-password=password --roles=admin
+  --auth-domain local
 jdk:
 - oraclejdk8
 language: java
@@ -42,4 +59,3 @@ script:
 - echo TESTNUM $(find . -name TEST-*.xml -newer /tmp/NOW | wc -l)
 services:
 - redis-server
-sudo: false
