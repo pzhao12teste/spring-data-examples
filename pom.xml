@@ -11,7 +11,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.0.BUILD-SNAPSHOT</version>
+		<version>2.0.0.M5</version>
 	</parent>
 
 	<modules>
@@ -33,8 +33,6 @@
 	<properties>
 
 		<apt.version>1.1.3</apt.version>
-		<java.version>1.8</java.version>
-		<spring-data-releasetrain.version>Kay-RELEASE</spring-data-releasetrain.version>
 
 	<gib.commitRange>${env.TRAVIS_COMMIT_RANGE}</gib.commitRange>
         <gib.enabled>true</gib.enabled>
@@ -42,15 +40,6 @@
         <gib.excludePathRegex>(.*\.apt$)|(.*\.txt$)|(.*\.md$)|(.*\.html$)|(.*\.rst$)|(.*\.scss$)|(.*\.css$)|(.*\.png$)|(.*\.py$)|(.*README$)|(.*README\.*)|(.*\.jpg$)|(.*\.jpeg$)|(.*NOTICE$)|(.*\.git.*$)|(site.xml)|(index.xml)|(checkstyle.xml)</gib.excludePathRegex>
         <gib.classpathFile>/tmp/classpathFile</gib.classpathFile>
     </properties>
-
-	<profiles>
-		<profile>
-			<id>spring5</id>
-			<properties>
-				<spring.version>5.0.0.M3</spring.version>
-			</properties>
-		</profile>
-	</profiles>
 
 	<developers>
 		<developer>
@@ -105,27 +94,6 @@
 
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-					<compilerArgument>-parameters</compilerArgument>
-				</configuration>
-			</plugin>
-		</plugins>
-	<extensions>
-            <extension>
-                <groupId>edu.illinois</groupId>
-                <artifactId>incremental-builder-with-ekstazi</artifactId>
-                <version>3.5.5</version>
-            </extension>
-        </extensions>
-    </build>
-
 	<repositories>
 		<repository>
 			<id>spring-libs-snapshot</id>
@@ -140,5 +108,14 @@
 		</pluginRepository>
 	</pluginRepositories>
 
+<build>
+        <extensions>
+            <extension>
+                <groupId>edu.illinois</groupId>
+                <artifactId>incremental-builder-with-ekstazi</artifactId>
+                <version>3.5.5</version>
+            </extension>
+        </extensions>
+    </build>
 </project>
 
